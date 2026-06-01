@@ -1,0 +1,6 @@
+// programs/add.calc
+// Expected output: 42
+
+var x = 10;
+var y = 32;
+print x + y;

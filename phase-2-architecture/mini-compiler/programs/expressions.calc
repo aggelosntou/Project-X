@@ -1,0 +1,24 @@
+// programs/expressions.calc
+// Tests operator precedence and all arithmetic operators.
+
+var a = 10;
+var b = 3;
+
+// Arithmetic
+print a + b;    // 13
+print a - b;    // 7
+print a * b;    // 30
+print a / b;    // 3  (integer division)
+print a % b;    // 1
+
+// Compound expression: 2 + 3 * 4 should be 14, not 20
+print 2 + 3 * 4;   // 14
+
+// Negative numbers via unary minus
+print 0 - 5;    // -5
+
+// Comparison (result is 0 or 1)
+print a > b;    // 1
+print a < b;    // 0
+print a == 10;  // 1
+print a != 10;  // 0

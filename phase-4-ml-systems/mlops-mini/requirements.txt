@@ -1,0 +1,2 @@
+numpy
+# sqlite3 is Python stdlib — no pip install needed

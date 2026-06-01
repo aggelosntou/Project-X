@@ -1,0 +1,2 @@
+numpy
+# torch  # optional: for compare_with_pytorch.py

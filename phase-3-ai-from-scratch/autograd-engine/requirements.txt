@@ -1,0 +1,3 @@
+numpy
+# matplotlib  # optional: for decision boundary visualization
+# torch       # optional: for gradient comparison tests

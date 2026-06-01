@@ -1,0 +1,39 @@
+// counter.lox — Demonstrate global variable manipulation
+// Computes sum of 1..100 and shows the result
+
+var sum = 0;
+var i   = 1;
+var max = 100;
+
+while (i <= max) {
+    sum = sum + i;
+    i = i + 1;
+}
+
+print "Sum of 1..100 =";
+print sum;
+
+// Should print 5050
+var expected = 5050;
+if (sum == expected) {
+    print "Correct!";
+} else {
+    print "Wrong!";
+}
+
+// Demonstrate boolean logic
+var x = 10;
+var y = 20;
+if (x < y and y > 15) {
+    print "Both conditions true";
+}
+
+if (x > 5 or y < 0) {
+    print "At least one condition true";
+}
+
+// Demonstrate string values
+var greeting = "Hello";
+var name = "world";
+print greeting;
+print name;

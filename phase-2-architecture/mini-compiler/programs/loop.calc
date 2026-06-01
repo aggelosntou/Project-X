@@ -1,0 +1,11 @@
+// programs/loop.calc
+// Sum 1 + 2 + ... + 100
+// Expected output: 5050
+
+var i = 1;
+var sum = 0;
+while (i <= 100) {
+    sum = sum + i;
+    i = i + 1;
+}
+print sum;

@@ -1,0 +1,15 @@
+// fib.lox — Iterative Fibonacci
+// Computes F(1)..F(15)
+
+var a = 0;
+var b = 1;
+var i = 0;
+var limit = 15;
+
+while (i < limit) {
+    print b;
+    var temp = a + b;
+    a = b;
+    b = temp;
+    i = i + 1;
+}
