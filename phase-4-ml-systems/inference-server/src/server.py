@@ -141,133 +141,135 @@ def _get_accumulator() -> BatchAccumulator:
 # FastAPI app
 # ---------------------------------------------------------------------------
 
-try:
-    from fastapi import FastAPI, HTTPException, Request, Response
-    from fastapi.responses import PlainTextResponse
-    from pydantic import BaseModel
-    _HAS_FASTAPI = True
-except ImportError:
-    _HAS_FASTAPI = False
-    # Minimal stub so the module can still be imported for testing
-    class BaseModel:  # type: ignore
-        pass
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import PlainTextResponse
+from pydantic import BaseModel
 
 
-if _HAS_FASTAPI:
-    app = FastAPI(
-        title="ML Inference Server",
-        description="Dynamic-batching inference server for MLP model",
-        version="1.0.0",
+# ---------------------------------------------------------------------------
+# Request / Response models
+# ---------------------------------------------------------------------------
+
+class PredictRequest(BaseModel):
+    inputs: List[List[float]]
+
+class PredictResponse(BaseModel):
+    predictions: List[List[float]]
+    latency_ms:  float
+    batch_size:  int
+
+class HealthResponse(BaseModel):
+    status:           str
+    model:            str
+    requests_served:  int
+    uptime_seconds:   float
+    queue_size:       int
+    throughput_rps:   float
+
+
+# ---------------------------------------------------------------------------
+# Lifespan (replaces deprecated @app.on_event)
+# ---------------------------------------------------------------------------
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    _get_accumulator()   # start background batching thread
+    yield
+    # shutdown: nothing to clean up (daemon thread exits with process)
+
+
+app = FastAPI(
+    title="ML Inference Server",
+    description="Dynamic-batching inference server for MLP model",
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+
+# ---------------------------------------------------------------------------
+# Endpoints
+# ---------------------------------------------------------------------------
+
+@app.post("/predict", response_model=PredictResponse)
+async def predict(req: PredictRequest):
+    """
+    Single or small-batch inference with dynamic batching.
+    Each request is submitted individually; the accumulator groups
+    concurrent requests into larger batches automatically.
+    """
+    import concurrent.futures
+
+    t_start = time.perf_counter()
+    acc     = _get_accumulator()
+    inputs  = np.array(req.inputs, dtype=np.float32)
+
+    try:
+        if inputs.shape[0] == 1:
+            result = acc.submit(inputs[0])
+        else:
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                futures = [pool.submit(acc.submit, inputs[i]) for i in range(len(inputs))]
+                results = [f.result() for f in futures]
+            result = np.concatenate(results, axis=0)
+    except queue.Full:
+        _metrics.record(0, error=True)
+        raise HTTPException(status_code=503, detail="Server overloaded — queue full")
+
+    latency_ms = (time.perf_counter() - t_start) * 1000
+    _metrics.record(latency_ms, batch_size=inputs.shape[0])
+
+    return PredictResponse(
+        predictions=result.tolist(),
+        latency_ms=round(latency_ms, 3),
+        batch_size=inputs.shape[0],
     )
 
-    # --- Request / Response models ---
 
-    class PredictRequest(BaseModel):
-        inputs: List[List[float]]   # list of input vectors
+@app.post("/batch_predict", response_model=PredictResponse)
+async def batch_predict(req: PredictRequest):
+    """Explicit batch inference — bypasses dynamic batching."""
+    t_start = time.perf_counter()
+    m       = _get_model()
+    inputs  = np.array(req.inputs, dtype=np.float32)
+    result  = m.predict(inputs)
 
-    class PredictResponse(BaseModel):
-        predictions: List[List[float]]
-        latency_ms:  float
-        batch_size:  int
+    latency_ms = (time.perf_counter() - t_start) * 1000
+    _metrics.record(latency_ms, batch_size=inputs.shape[0])
 
-    class HealthResponse(BaseModel):
-        status:           str
-        model:            str
-        requests_served:  int
-        uptime_seconds:   float
-        queue_size:       int
-        throughput_rps:   float
+    return PredictResponse(
+        predictions=result.tolist(),
+        latency_ms=round(latency_ms, 3),
+        batch_size=inputs.shape[0],
+    )
 
-    # --- Startup ---
 
-    @app.on_event("startup")
-    async def startup():
-        _get_accumulator()   # initialise background thread
+@app.get("/health", response_model=HealthResponse)
+async def health():
+    m   = _get_model()
+    acc = _get_accumulator()
+    return HealthResponse(
+        status="healthy",
+        model=repr(m),
+        requests_served=_metrics.requests_total,
+        uptime_seconds=round(_metrics.uptime_seconds(), 1),
+        queue_size=acc.queue_size(),
+        throughput_rps=round(_metrics.throughput_rps(), 2),
+    )
 
-    # --- Endpoints ---
 
-    @app.post("/predict", response_model=PredictResponse)
-    async def predict(req: PredictRequest):
-        """
-        Single or small-batch inference with dynamic batching.
-        Each request is submitted individually; the accumulator groups
-        concurrent requests into larger batches automatically.
-        """
-        t_start = time.perf_counter()
-        acc = _get_accumulator()
+@app.get("/metrics", response_class=PlainTextResponse)
+async def metrics():
+    """Prometheus-format metrics."""
+    return PlainTextResponse(
+        content=_metrics.prometheus_text(),
+        media_type="text/plain",
+    )
 
-        inputs = np.array(req.inputs, dtype=np.float32)  # (N, in_features)
 
-        try:
-            if inputs.shape[0] == 1:
-                result = acc.submit(inputs[0])             # shape (1, out)
-            else:
-                # Multiple inputs in one request — submit each separately so
-                # they can be batched with other concurrent requests
-                import concurrent.futures
-                with concurrent.futures.ThreadPoolExecutor() as pool:
-                    futures = [pool.submit(acc.submit, inputs[i]) for i in range(len(inputs))]
-                    results = [f.result() for f in futures]
-                result = np.concatenate(results, axis=0)
-
-        except queue.Full:
-            _metrics.record(0, error=True)
-            raise HTTPException(status_code=503, detail="Server overloaded — queue full")
-
-        latency_ms = (time.perf_counter() - t_start) * 1000
-        _metrics.record(latency_ms, batch_size=inputs.shape[0])
-
-        return PredictResponse(
-            predictions=result.tolist(),
-            latency_ms=round(latency_ms, 3),
-            batch_size=inputs.shape[0],
-        )
-
-    @app.post("/batch_predict", response_model=PredictResponse)
-    async def batch_predict(req: PredictRequest):
-        """
-        Explicit batch inference — the whole batch is processed together.
-        Use this when you control the batch yourself and don't want dynamic batching.
-        """
-        t_start = time.perf_counter()
-        m = _get_model()
-
-        inputs = np.array(req.inputs, dtype=np.float32)
-        result = m.predict(inputs)
-
-        latency_ms = (time.perf_counter() - t_start) * 1000
-        _metrics.record(latency_ms, batch_size=inputs.shape[0])
-
-        return PredictResponse(
-            predictions=result.tolist(),
-            latency_ms=round(latency_ms, 3),
-            batch_size=inputs.shape[0],
-        )
-
-    @app.get("/health", response_model=HealthResponse)
-    async def health():
-        m   = _get_model()
-        acc = _get_accumulator()
-        return HealthResponse(
-            status="healthy",
-            model=repr(m),
-            requests_served=_metrics.requests_total,
-            uptime_seconds=round(_metrics.uptime_seconds(), 1),
-            queue_size=acc.queue_size(),
-            throughput_rps=round(_metrics.throughput_rps(), 2),
-        )
-
-    @app.get("/metrics", response_class=PlainTextResponse)
-    async def metrics():
-        """Prometheus-format metrics."""
-        return PlainTextResponse(
-            content=_metrics.prometheus_text(),
-            media_type="text/plain",
-        )
-
-    @app.get("/")
-    async def root():
-        return {"message": "ML Inference Server", "docs": "/docs"}
+@app.get("/")
+async def root():
+    return {"message": "ML Inference Server", "docs": "/docs"}
 
 
 # ---------------------------------------------------------------------------
@@ -275,10 +277,6 @@ if _HAS_FASTAPI:
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    if not _HAS_FASTAPI:
-        print("FastAPI not installed. Run: pip install fastapi uvicorn")
-        sys.exit(1)
-
     import uvicorn
     print("Starting ML Inference Server on http://0.0.0.0:8000")
     print("API docs: http://0.0.0.0:8000/docs")

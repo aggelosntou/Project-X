@@ -1,0 +1,56 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Compiled C / binaries
+*.o
+*.a
+*.out
+*.so
+
+# Build artifacts from project Makefiles
+phase-0-foundations/data-structures-c/test_all
+phase-0-foundations/string-library/test_mystring
+phase-1-systems/memory-allocator/test_allocator
+phase-1-systems/unix-shell/shell
+phase-1-systems/http-server/server
+phase-1-systems/file-system-toy/fs
+phase-1-systems/thread-pool/test_pool
+phase-1-systems/lock-free-queue/test_lfq
+phase-1-systems/lock-free-queue/bench_lfq
+phase-1-systems/parallel-matrix-multiply/benchmark
+phase-2-architecture/cpu-emulator/emulator
+phase-2-architecture/cache-experiments/01_cache_size
+phase-2-architecture/cache-experiments/02_cache_line_size
+phase-2-architecture/cache-experiments/03_false_sharing
+phase-2-architecture/cache-experiments/04_sequential_vs_random
+phase-2-architecture/cache-experiments/05_matrix_traversal
+phase-2-architecture/matrix-multiply-optimized/benchmark
+phase-2-architecture/mini-compiler/calc
+phase-2-architecture/mini-database/db
+phase-3-ai-from-scratch/matrix-library-c/test_matrix
+
+# Generated files
+*.s
+*.db
+*.bin
+*.npz
+model.bin
+model.npz
+mlops.db
+benchmark_results.json
+benchmark_report.md
+models/
+
+# Rust
+phase-1-systems/tcp-server-rust/target/
+
+# macOS
+.DS_Store
