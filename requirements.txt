@@ -1,0 +1,29 @@
+# ─────────────────────────────────────────────
+# Project-X — Python dependencies
+# Install everything: pip install -r requirements.txt
+# ─────────────────────────────────────────────
+
+# ── Core (required by every phase) ───────────
+numpy>=1.24
+
+# ── System monitoring (phase-4 profiler / benchmark-suite) ──
+psutil>=5.9
+
+# ── Phase 4: inference-server ────────────────
+fastapi>=0.100
+uvicorn[standard]>=0.22
+pydantic>=2.0
+prometheus_client>=0.17
+httpx>=0.24          # for load testing the inference server
+
+# ── Phase 4: edge-deployment ─────────────────
+onnx>=1.14
+onnxruntime>=1.16
+
+# ── Optional: visualization ──────────────────
+# Uncomment to get plots in optimizer-zoo, loss-functions, etc.
+matplotlib>=3.7
+
+# ── Optional: PyTorch comparison tests ───────
+# Uncomment if you want to run compare_with_pytorch.py
+# torch>=2.0
