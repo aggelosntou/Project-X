@@ -44,7 +44,7 @@ This repository is the documented path to that level.
 
 ## Structure of the Journey
 
-The journey is organized into **five phases**, each building on the last.  
+The journey is organized into **six phases**, each building on the last.  
 No phase is skipped. No phase is rushed.
 
 ```
@@ -53,6 +53,7 @@ Phase 1 → Systems Programming                   [memory, OS, networks, concurr
 Phase 2 → Computer Architecture                 [hardware, CPUs, GPUs, compilers, databases]
 Phase 3 → AI & ML from Scratch                  [math → code → systems]
 Phase 4 → ML Systems Engineering                [the book comes alive]
+Phase 5 → Frontier ML Systems                   [LLM inference, GPU kernels, distributed training, alignment]
 ```
 
 Each phase has concrete projects, clear completion criteria, and documented learning.
@@ -221,6 +222,38 @@ By this phase, every concept in the book has a project behind it.
 
 ---
 
+## Phase 5 — Frontier ML Systems
+
+**Goal:** Build the systems that frontier labs are running today. Close the gap between academic ML knowledge and what production research engineering actually requires in 2026.
+
+Phase 4 teaches ML Systems as a discipline. Phase 5 is where you execute at the frontier — the algorithms, kernels, and training pipelines that define how models at the scale of GPT-4, Claude, and Gemini are built and served. Every project in this phase mirrors a real system at a top lab. Every benchmark number you produce here is the kind of number that appears in a research engineer interview.
+
+### Projects
+
+| Project | Language | What it mirrors |
+|---|---|---|
+| `llm-inference-engine` | Python, CUDA | vLLM — PagedAttention, continuous batching, speculative decoding |
+| `flash-attention-cuda` | CUDA C++ | FlashAttention 1 & 2 — tiled attention, online softmax, IO analysis |
+| `triton-kernels` | Triton, Python | Production kernel engineering — fused softmax, LayerNorm, cross-entropy, attention |
+| `distributed-training-internals` | Python, C | Megatron-LM + ZeRO — Ring-AllReduce, tensor parallelism, optimizer sharding |
+| `rlhf-pipeline` | Python | InstructGPT + DPO — reward model, PPO, direct preference optimization |
+
+### Why Phase 5 exists
+
+Phases 0–4 build every prerequisite. Phase 5 is where they converge. A distributed training bug is simultaneously a concurrency problem (Phase 1), a memory bandwidth problem (Phase 2), and a gradient synchronization problem (Phase 3). A fused CUDA kernel requires compiler knowledge (Phase 2), hardware understanding (Phase 2), and ML intuition (Phase 3). Phase 5 does not teach new concepts — it demands that you apply all of them simultaneously, at the level the problems require.
+
+The projects here are not exercises. They are the systems that matter.
+
+### Phase 5 Completion Criteria
+
+- Can implement a paged KV cache from scratch and explain the memory fragmentation analysis
+- Can write a tiled attention kernel in both CUDA and Triton and explain the performance difference
+- Can implement Ring-AllReduce from sockets and trace a distributed training hang to its root cause
+- Understands DPO at the mathematical level: can derive the loss from the RLHF objective by hand
+- Every project has a benchmark with measurable numbers and hardware specs sufficient to reproduce them
+
+---
+
 ## Reading List
 
 These are not optional. They are part of the curriculum.
@@ -248,6 +281,21 @@ These are not optional. They are part of the curriculum.
 - *Roofline: An Insightful Visual Performance Model* — Williams et al. (2009)
 - *MLSys: The New Frontier of Machine Learning Systems* — Ratner et al.
 - *Megatron-LM: Training Multi-Billion Parameter Language Models* — Shoeybi et al.
+
+### Phase 5 Papers (required before each project)
+
+- *Efficient Memory Management for Large Language Model Serving with PagedAttention* — Kwon et al. (2023) `[llm-inference-engine]`
+- *Fast Inference from Transformers via Speculative Decoding* — Leviathan et al. (2023) `[llm-inference-engine]`
+- *FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness* — Dao et al. (2022) `[flash-attention-cuda]`
+- *FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning* — Dao (2024) `[flash-attention-cuda, triton-kernels]`
+- *Triton: An Intermediate Language and Compiler for Tiled Neural Network Computations* — Tillet et al. (2019) `[triton-kernels]`
+- *ZeRO: Memory Optimizations Toward Training Trillion Parameter Models* — Rajbhandari et al. (2020) `[distributed-training-internals]`
+- *PyTorch FSDP: Experiences on Scaling Fully Sharded Data Parallel* — Zhao et al. (2023) `[distributed-training-internals]`
+- *GPipe: Efficient Training of Giant Neural Networks using Pipeline Parallelism* — Huang et al. (2019) `[distributed-training-internals]`
+- *Training language models to follow instructions with human feedback* — Ouyang et al. / InstructGPT (2022) `[rlhf-pipeline]`
+- *Direct Preference Optimization: Your Language Model is Secretly a Reward Model* — Rafailov et al. (2023) `[rlhf-pipeline]`
+- *Proximal Policy Optimization Algorithms* — Schulman et al. (2017) `[rlhf-pipeline]`
+- *Sarathi-Serve: Efficient LLM Serving by Piggybacking Decodes with Chunked Prefills* — Agrawal et al. (2024) `[llm-inference-engine]`
 
 ---
 
@@ -305,6 +353,13 @@ Project-X/
 │   ├── edge-deployment/
 │   ├── cuda-kernel-custom/
 │   └── benchmark-suite/
+│
+├── phase-5-frontier/
+│   ├── llm-inference-engine/         ← PagedAttention, continuous batching, speculative decoding
+│   ├── flash-attention-cuda/         ← FlashAttention 1 & 2 in raw CUDA
+│   ├── triton-kernels/               ← Fused softmax, LayerNorm, attention, cross-entropy
+│   ├── distributed-training-internals/ ← Ring-AllReduce, tensor parallelism, ZeRO
+│   └── rlhf-pipeline/               ← Reward model + PPO + DPO from scratch
 │
 ├── docs/
 │   ├── notes/                        ← concept notes per topic
@@ -385,6 +440,7 @@ That is the portfolio. That is the proof.
 > Phase 2 — Not started  
 > Phase 3 — Not started  
 > Phase 4 — Not started  
+> Phase 5 — Scaffolded (READMEs complete, implementation pending)  
 
 *This repository is actively being built. Each phase will be updated as projects are completed.*
 
