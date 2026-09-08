@@ -1,8 +1,4 @@
-# Project-X
-
-**Author:** Angelos Ntousis  
-**Background:** Mathematician  
-**Target:** Top 0.1% ML Systems Engineer / Scientist  
+# Project-X 
 **Timeline:** Pre-masters  
 
 ---
