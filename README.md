@@ -428,18 +428,3 @@ Project-X is complete when:
 That is the portfolio. That is the proof.
 
 ---
-
-## Status
-
-> Phase 0 — In progress  
-> Phase 1 — Not started  
-> Phase 2 — Not started  
-> Phase 3 — Not started  
-> Phase 4 — Not started  
-> Phase 5 — Scaffolded (READMEs complete, implementation pending)  
-
-*This repository is actively being built. Each phase will be updated as projects are completed.*
-
----
-
-*Built by Angelos Ntousis — mathematician, engineer in progress.*
